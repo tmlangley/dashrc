@@ -1,0 +1,127 @@
+# The path to your development docroot
+export DOCROOT=/vagrant_data
+
+#cd aliases
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+# ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+
+# Shortcuts
+alias sites="cd $DOCROOT"
+
+# Aliases vim
+alias v="vim"
+
+# Show Directory tree
+alias tree="tree -C --dirsfirst --filelimit 50"
+alias 2tree="tree -CL 2 --dirsfirst --filelimit 50"
+alias 3tree="tree -CL 3 --dirsfirst --filelimit 50"
+alias 4tree="tree -CL 4 --dirsfirst --filelimit 50"
+
+# Fucking sudo
+alias fucking="sudo"
+
+# prints the full path to a file, like pwd, for files
+function _pwf () {
+dir=$(echo $(cd $(dirname "$1"); pwd))
+base=$(echo $(basename "$1"))
+echo "$dir/$base"
+}
+alias pwf=_pwf
+
+# Drush
+alias ds='drush status'
+alias drcc='drush cache-clear all'
+alias drdu='drush sql-dump --ordered-dump --result-file=~/tmp/sql-dumps/dump.sql'
+alias drdrop='drush sql-dump --ordered-dump --result-file=~/tmp/sql-dumps/dump.sql && drush sql-drop --yes'
+alias dren='drush pm-enable'
+alias drdis='drush pm-disable'
+alias drsp='cp sites/default/default.settings.php sites/default/settings.php'
+alias dr='drush'
+alias sqlsync='drush sql-sync --no-cache'
+alias drsync='drush rsync -rv'
+
+alias js_on="drush vset preprocess_js 1 --yes"
+alias js_off="drush vset preprocess_js 0 --yes"
+alias css_on="drush vset preprocess_css 1 --yes"
+alias css_off="drush vset preprocess_css 0 --yes"
+alias agg_off="js_off && css_off"
+alias agg_on="js_on && css_on"
+alias clear_theme="drush cc css+js"
+
+
+# Utils
+
+_sql-slurp () {
+    printf "This will overwrite the $2 database with the $1 database.\n"
+    printf "\n\t\t*** $1 -> $2 ***\n\n"
+    sleep 3s
+    read -p "Are you sure [Y/n]? " -n 1 -r
+    if [[ $REPLY  =~ ^[Yy]$ ]]; then
+        drush $2 sql-drop -y
+        printf "\n"
+        drush $1 sql-dump | pv -br | drush $2 sql-cli -A
+    fi
+    printf "\n"
+}
+
+alias sql-slurp="_sql-slurp"
+
+_drupal_root() {
+  # Go up until we find index.php
+  current_dir=`pwd`;
+  while [ ${current_dir} != "/" -a -d "${current_dir}" -a \
+          ! -f "${current_dir}/index.php" ] ; 
+  do
+    current_dir=$(dirname "${current_dir}") ;
+  done
+  if [ "$current_dir" == "/" ] ; then
+    exit 1 ;
+  else
+    echo "$current_dir" ;
+  fi 
+}
+
+alias cdd="_drupal_root"
+
+# cgrep performs a normal grep, but cuts the output to 120 chars
+function _cgrep () {
+  grep "$@" | cut -c1-120
+}
+
+alias cgrep="_cgrep"
+
+# Add tab completion for SSH hostnames based on ~/.ssh/config, ignoring wildcards
+[ -e "$HOME/.ssh/config" ] && complete -o "default" -o "nospace" -W "$(grep "^Host" ~/.ssh/config | grep -v "[?*]" | cut -d " " -f2 | tr ' ' '\n')" scp sftp ssh
+
+# Autocompletes folder names in development docroot. Set development_root accoridngly.
+goto() {
+  cd $DOCROOT/$1
+	if [[ -a site ]]; then
+		cd site
+	elif [[ -a docroot ]]; then
+		cd docroot
+	fi
+}
+
+_goto() {
+	local cur opts
+	cur="${COMP_WORDS[COMP_CWORD]}"
+	opts=$(cd $DOCROOT; ls -d */. | sed 's|/./||')
+	COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+}
+complete -F _goto goto
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+    . /etc/bash_completion
+fi
+
