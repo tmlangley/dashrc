@@ -47,6 +47,8 @@ alias dr='drush'
 alias sqlsync='drush sql-sync --no-cache'
 alias drsync='drush rsync -rv'
 
+alias drfixfiles='drush vset file_public_path "sites/default/files" && drush vset file_private_path "sites/default/files/private" && drush vset file_temporary_path "sites/default/files/private/tmp"'
+
 alias js_on="drush vset preprocess_js 1 --yes"
 alias js_off="drush vset preprocess_js 0 --yes"
 alias css_on="drush vset preprocess_css 1 --yes"
